@@ -1,74 +1,78 @@
-<script setup>
-import { onMounted, ref,watch } from 'vue'
-import { useDataStore } from '@/stores/data.js'
-
-
-const getDatastore = useDataStore();
-const citySelect=ref(null);
-const totalData=ref(null);
-/* onMounted(async() => {
-  await getData();
-
-}) */
-onMounted(()=>{
-  getData();
-
-})
-const getData=()=>{
-  citySelect.value=getDatastore.data;
-  console.log(citySelect.value.length);
-  if(citySelect.value){
-    totalData.value=citySelect.value.length
-  }
-}
-
-
-
-</script>
 <template>
   <div class="headerConent">
     <div class="title">
       <h1 class="header">全台羽球場館</h1>
-      <span>總共有{{totalData}}筆資料</span>
-
+      <span v-if="totalData"> 總共有{{ totalData }}筆資料 </span>
     </div>
     <div class="select">
-      <select name="city" id="city">
-      <option value="請選擇城市">請選擇城市</option>
-      <option value="台北市">台北市</option>
-      <option value="新北市">新北市</option>
-      <option value="桃園市">桃園市</option>
-    </select>
-    <select name="isOpen" id="isOpen">
-      <option value="可否付費租借">可否付費租借</option>
-      <option value="可付費租借">可付費租借</option>
-      <option value="不開放租借">不開放租借</option>
-    </select>
+      <el-select v-model="selectData.city" name="city" placeholder="請選擇城市">
+        <el-option  v-for="(item, index) in citySelect" :key="index" :label="item" :value="item" />
+      </el-select>
+      <el-select @change="$emit('selectData',selectData)"  v-model="selectData.rent" name="rent" placeholder="是否可租借">
+        <el-option v-for="item in rent" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
     </div>
   </div>
-
 </template>
-<style >
-.headerContent{
+<script setup>
+import { onMounted, ref, reactive,defineEmits } from 'vue'
+import { useDataStore } from '@/stores/data.js'
+
+const getDatastore = useDataStore()
+const citySelect = ref(null)
+const totalData = ref(null)
+/* onMounted(async() => {
+  await getData();
+
+}) */
+onMounted(async () => {
+  getDatastore.getCity()
+  getData()
+})
+const getData = () => {
+  //citySelect.value=getDatastore.city;
+  totalData.value = getDatastore.totalData
+  // if(citySelect.value){
+  //   totalData.value=citySelect.value.length
+  // }
+  //console.log(getCities.value);
+}
+const rent = [
+  { label: '所有資料', value: 'all' },
+  { label: '可付費租借', value: 'canRent' },
+  { label: '不可付費租借', value: 'cantRent' }
+]
+
+//v-model 接收Select資料
+const selectData = reactive({
+  city: '',
+  rent: ''
+})
+defineEmits(['selectData','callback'])
+
+
+</script>
+<style>
+.headerContent {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.title{
+.title {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.title span{
+.title span {
   color: blue;
   font-size: 20px;
   padding: 10px 20px;
   text-decoration: underline;
 }
-.header{
-  color: #58D68D;
+.header {
+  color: #58d68d;
 }
-.select{
+.select {
   display: flex;
 }
 </style>

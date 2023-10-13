@@ -1,98 +1,175 @@
+<template>
+  {{ props.filterData }}
+  <div class="container">
+    <el-table
+      v-loading="loading"
+      element-loading-text="please wait for loading"
+      :data="tableData"
+      class="table"
+      max-height="400"
+    >
+      <el-table-column
+        v-for="(item, index) in tableHead"
+        :key="index"
+        :prop="item.value"
+        :label="item.label"
+      />
+      <el-table-column prop="Photo1" label="場館照片">
+        <template v-slot="scope">
+          <el-image class="image" :src="scope.row.Photo1"> </el-image>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="pagination">
+      <!-- <PaginationPages :state="state" :dataLength="dataLength"></PaginationPages> -->
+      <el-pagination
+        class="page_position"
+        @current-change="handleCurrentChange"
+        background
+        v-model:current-page="state.currentPage"
+        layout="prev, pager, next"
+        :total="dataLength"
+        :page-size="state.sizePage"
+      >
+      </el-pagination>
+    </div>
+  </div>
+</template>
 <script setup>
-import { onMounted, ref } from 'vue'
+//import PaginationPages from '@/components/PaginationPages.vue'
+
+import { onMounted, ref, reactive,useAttrs,watch } from 'vue'
 import { useDataStore } from '@/stores/data.js'
 
 
-onMounted(async() => {
-  await getDatastore.getData();
-  //console.log(getDatastore.data);
-  cityData();
-  getDatastore.totalData=getDatastore.data.length;
-  dataContent.value=getDatastore.data;
+const attrs = useAttrs();
+//const propFilterData = attrs.onFilterData;
+
+const props=defineProps(['filterData']);
+const propData=ref(props.filterData)
+const transformPropData=[];
+transformPropData.push(propData);
+
+const tableHead = [
+  { label: '場館縣市', value: 'city' },
+  { label: '場館名稱', value: 'Name' },
+  { label: '場館地址', value: 'Address' },
+  { label: '使用說明', value: 'RentState' },
+  { label: '聯絡電話', value: 'OperationTel' }
+]
+
+const loading = ref(true)
+const getDatastore = useDataStore()
+const dataContent = ref(null)
+const dataLength = ref(0)
+onMounted(async () => {
+  await getDatastore.getData()
+  loading.value = false
+  cityData()
+  getPageData()
+  dataContent.value = getDatastore.data
+  //得到資料總數
+  getDatastore.totalData = dataContent.value.length
+  dataLength.value = getDatastore.totalData
+  getTableData()
 })
 
-
-
-const getDatastore = useDataStore();
-const dataContent=ref(null);
-let dataCity={};
-const originData=ref(null);
-const newData=ref(null);
-const cityData=()=>{
-  originData.value=getDatastore.data;
+const originData = ref(null)
+const newData = ref(null)
+const selectCity = ref([])
+const cityData = () => {
+  originData.value = getDatastore.data
 
   //把原來的資料取出地址, 並賦予到newData內
-  newData.value=originData.value.map(item => {
-    return item.Address;
-  });
-  //console.log(newData.value);
-  //把newData內的資料,取出前３個字
-  //newData.value.substr(0, length)
-  Object.keys(newData.value).forEach((key) => {
-  //console.log(newData.value[key].substr(0, 3)); // 各縣市
-  dataCity[key]=newData.value[key].substr(0, 3);
-  getDatastore.city=dataCity;
+  newData.value = originData.value.map((item) => {
+    return item.Address
   })
 
-//console.log(dataCity);
-originData.value.forEach(function(item,index){
-        //console.log(Object.values(dataCity));
-        //console.log(item);
-        item.city=dataCity[index];
-    });
-originData.value=getDatastore.newdata;
+  let dataTableCity = {}
+  Object.keys(newData.value).forEach((key) => {
+    // 取得地址前三個字為各縣市
+    dataTableCity[key] = newData.value[key].substr(0, 3)
+  })
+
+  //取得不重複的城市資料, 存到store裡面給HeadComponent使用
+  selectCity.value = Object.values(dataTableCity).filter((item, index) => {
+    return Object.values(dataTableCity).indexOf(item) === index
+  })
+  getDatastore.city = selectCity.value
+  //console.log(selectCity.value);
+  //將各縣市跑回圈塞回原APIdata
+  originData.value.forEach(function (item, index) {
+    //console.log(Object.values(dataCity));
+    item.city = dataTableCity[index]
+  })
 }
 
+//Pagination會用到的參數
+const state = reactive({
+  currentPage: 1, //目前頁面數
+  sizePage: 20, //單頁有幾筆資料
+  total: dataLength,
+  minData: 0,
+  maxData: 0
+})
+const getPageData = () => {
+  state.minData = state.currentPage * state.sizePage - state.sizePage + 1
+  state.maxData = state.currentPage * state.sizePage
+}
+let tableData = ref([])
+//前端限制Table 顯示的row數量
+const getTableData = () => {
+  return dataContent.value.forEach((item, index) => {
+    const num = index + 1
+    if (num >= state.minData && num <= state.maxData) {
+      tableData.value.push(item)
+    }
+  })
+};
+const handleCurrentChange = (e) => {
+  state.currentPage = e
+  getPageData()
+  tableData.value = [] //須將原資料清除
+  getTableData()
+};
+const filter=()=>{
+  filterData.forEach((el)=>{
+    console.log(el);
+  })
+}
+watch(
+  () => propData,
+  (newValue, oldValue) => {
+    // Note: `newValue` will be equal to `oldValue` here
+    // *unless* state.someObject has been replaced
+    console.log(newValue);
 
-
+    // filter();
+  },
+  { deep: true }
+)
 
 </script>
-<template>
-  <h1 class="content">我是content</h1>
-  <div class="container">
-    <table class="table">
-    <thead>
-      <th>場館城市</th>
-      <th>場館名稱</th>
-      <th>場館地址</th>
-      <th>如何使用</th>
-      <th>聯絡方式</th>
-      <th>場館照片</th>
-    </thead>
-    <tbody>
-      <tr v-for="(item, key) in dataContent" :key="key">
-        <td>{{ item.city }}</td>
-        <td>{{ item.Name }}</td>
-        <td>{{ item.Address }}</td>
-        <td>{{ item.RentState }}</td>
-        <td>{{ item.OperationTel }}</td>
-        <td><img class="image" :src="item.Photo1" :alt="item.Name"></td>
-      </tr>
-    </tbody>
-  </table>
-  </div>
-</template>
 
-<style >
-.content{
-  color: #F37503;
-}
-.container{
+<style>
+.container {
   width: 100%;
+  margin: 0 auto;
+  max-height: 300px;
 }
-.table{
-  margin: 0 20px;
+.table {
+  margin: 30px auto;
 }
-.table td, .table th{
+.table td,
+.table th {
   border-collapse: collapse;
-  border-bottom:2px solid gray;
+  border-bottom: 2px solid gray;
   padding: 10px 0;
 }
-td{
+td {
   text-align: center;
 }
-.image{
-  width: 200px;
-  height: 180px;
+.pagination {
+  margin: 0 auto;
 }
 </style>

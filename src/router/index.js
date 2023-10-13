@@ -19,5 +19,10 @@ const router = createRouter({
     }
   ]
 })
+router.beforeEach((to, from, next) => {
+  // to and from are both route objects. must call `next`.
+  document.title="BadmintonSelector"
+  next()
+})
 
 export default router
