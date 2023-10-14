@@ -23,21 +23,21 @@ export const useDataStore = defineStore('dataList', {
       })
       .catch((error)=>console.log(error));
     },
-    async getCity(){
-      this.res=await axios.get(this.cityUrl,{
-        headers: {"Access-Control-Allow-Origin": "*",
-        'Content-Type': 'application/json',
-      },
-        withCredentials: true,
-        credentials: 'same-origin',
+    // async getCity(){
+    //   this.res=await axios.get(this.cityUrl,{
+    //     headers: {"Access-Control-Allow-Origin": "*",
+    //     'Content-Type': 'application/json',
+    //   },
+    //     withCredentials: true,
+    //     credentials: 'same-origin',
 
-      })
-      .then((response)=>{
-        //console.log(response.data);
-        this.ciy=response.data;
-      })
-      .catch((error)=>console.log(error));
-    },
+    //   })
+    //   .then((response)=>{
+    //     //console.log(response.data);
+    //     this.ciy=response.data;
+    //   })
+    //   .catch((error)=>console.log(error));
+    // },
     }
   },
 )
