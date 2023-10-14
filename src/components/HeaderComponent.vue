@@ -26,7 +26,7 @@ const totalData = ref(null)
 
 }) */
 onMounted(async () => {
-  getDatastore.getCity()
+  //getDatastore.getCity()
   getData()
 })
 const getData = () => {
